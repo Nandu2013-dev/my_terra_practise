@@ -1,3 +1,6 @@
+provider "aws" {
+  region = "us-east-1"
+}
 # Creation of VPC
 resource "aws_vpc" "my_vpc" {
   cidr_block = "10.0.0.0/16"
@@ -97,6 +100,7 @@ resource "aws_instance" "my_ec2_server" {
   instance_type          = "t2.nano"
   subnet_id              = aws_subnet.my_subnet_1.id
   vpc_security_group_ids = [aws_security_group.my_sg.id]
+  associate_public_ip_address = true 
   tags = {
     Name = "gan-ec2-server"
   }
