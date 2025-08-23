@@ -1,0 +1,74 @@
+provider "aws" {
+  region = "us-east-1"
+}
+
+# ----------------------------
+# LOCALS BLOCK
+# ----------------------------
+locals {
+  inbound_rules = [
+    { port = 22, description = "SSH" },
+    { port = 80, description = "HTTP" }
+  ]
+
+  outbound_rules = [
+    { port = 443, description = "HTTPS" },
+    { port = 8080, description = "App traffic" }
+  ]
+
+  cidr_block = "10.0.0.0/16"
+}
+
+# ----------------------------
+# VPC (optional, or use existing one)
+# ----------------------------
+resource "aws_vpc" "demo_vpc" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name = "demo-vpc"
+  }
+}
+
+# ----------------------------
+# SECURITY GROUP
+# ----------------------------
+resource "aws_security_group" "example_sg" {
+  name        = "example-sg"
+  description = "Allow specific ports for inbound and outbound"
+  vpc_id      = aws_vpc.demo_vpc.id
+
+  tags = {
+    Name = "example-security-group"
+  }
+}
+
+# ----------------------------
+# INBOUND RULES
+# ----------------------------
+resource "aws_security_group_rule" "inbound_rules" {
+  for_each = { for idx, rule in local.inbound_rules : idx => rule }
+
+  type              = "ingress"
+  from_port         = each.value.port
+  to_port           = each.value.port
+  protocol          = "tcp"
+  cidr_blocks       = [local.cidr_block]
+  description       = each.value.description
+  security_group_id = aws_security_group.example_sg.id
+}
+
+# ----------------------------
+# OUTBOUND RULES
+# ----------------------------
+resource "aws_security_group_rule" "outbound_rules" {
+  for_each = { for idx, rule in local.outbound_rules : idx => rule }
+
+  type              = "egress"
+  from_port         = each.value.port
+  to_port           = each.value.port
+  protocol          = "tcp"
+  cidr_blocks       = [local.cidr_block]
+  description       = each.value.description
+  security_group_id = aws_security_group.example_sg.id
+}
